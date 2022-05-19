@@ -50,6 +50,23 @@ app.delete('/api/persons/:id', (req, res) => {
     res.status(204).end()
 })
 
+app.post('/api/persons', (req, res) => {
+    const body = req.body
+    if (!body.name || !body.number) {
+        return res.status(400).json({
+            error: 'name or number missing'
+        })
+    }
+    const person = {
+        id: Math.floor(Math.random() * 100000),
+        name: body.name,
+        number: body.number
+    }
+    persons = persons.concat(person)
+    console.log(persons)
+    res.json(person)
+})
+
 
 app.listen(3000, () => {
     console.log('Server running on port 3000')
