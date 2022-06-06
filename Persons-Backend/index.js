@@ -1,6 +1,19 @@
 const express = require('express')
 const app = express()
+const morgan = require('morgan')
 
+//Middleware
+app.use(morgan(function (tokens, req, res) {
+    return [
+        tokens.method(req, res),
+        tokens.url(req, res),
+        tokens.status(req, res),
+        tokens.res(req, res, 'content-length'), '-',
+        tokens['response-time'](req, res), 'ms',
+        req.body
+    ].join(' ')
+}))
+app.use(morgan(":method :url /:status/ :response-time -ms :req[body]"))
 app.use(express.json())
 
 let persons = [
@@ -71,7 +84,6 @@ app.post('/api/persons', (req, res) => {
         number: body.number
     }
     persons = persons.concat(person)
-    console.log(persons)
     res.json(person)
 })
 
