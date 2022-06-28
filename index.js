@@ -1,6 +1,10 @@
 const express = require('express');
+const morgan = require('morgan');
+const cors = require('cors');
 const app = express();
 
+app.use(cors())
+app.use(morgan('dev'))
 app.use(express.json());
 
 let notes = [
@@ -26,7 +30,6 @@ let notes = [
 
 app.post('/api/notes', (req, res) => {
     const body = req.body;
-    console.log(body)
     if (!body.conntent)
         return res.status(400).json({ error: 'content missing' })
     else {
@@ -72,7 +75,7 @@ app.delete('/api/notes/:id', (req, res) => {
 });
 
 
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
