@@ -1,64 +1,87 @@
 require('dotenv').config()
 require('./mongo')
+const cors = require('cors')
 const express = require('express')
+const notFound = require('./middleware/notFound')
+const handleErrors = require('./middleware/handleErrors')
 const app = express()
 const morgan = require('morgan')
 const Person = require('./models/Person')
 
 // Middleware
+
+app.use(cors())
 app.use(morgan('dev'))
 app.use(express.json())
 
-
+// Routes
 app.get('/api/persons', (req, res) => {
-  
-  res.json(persons)
+  console.log('entro')
+  Person.find({})
+    .then(persons => {
+      res.json(persons)
+    })
 })
 
-app.get("/info", (req, res) => {
-  const date = new Date();
-  const info = `<p>Phonebook has info for ${persons.length} people</p>
-    <p>${date}</p>`;
-  res.send(info);
-});
+app.get('/api/persons/:id', (req, res) => {
+  const id = req.params.id
+  Person.findById(id)
+    .then(person => {
+      person ? res.json(person) : res.status(404).end()
+    })
+})
 
-app.get("/api/persons/:id", (req, res) => {
-  const id = Number(req.params.id);
-  const person = persons.find((person) => person.id === id);
-  person ? res.json(person) : res.status(404).end();
-});
+app.delete('/api/persons/:id', (req, res, next) => {
+  const id = req.params.id
+  Person.findByIdAndDelete(id).then(result => {
+    res.status(204).end()
+  }).catch(error => next(error))
 
-app.delete("/api/persons/:id", (req, res) => {
-  const id = Number(req.params.id);
-  persons = persons.filter((person) => person.id !== id);
-  console.log(persons);
-  res.status(204).end();
-});
+  res.status(204).end()
+})
 
-app.post("/api/persons", (req, res) => {
-  const body = req.body;
-  if (!body.name || !body.number) {
+app.post('/api/persons', (req, res) => {
+  const body = req.body
+  if (!body.name || !body.telephone) {
     return res.status(400).json({
-      error: "name or number missing",
-    });
+      error: 'name or number missing'
+    })
   }
 
-  const exitsPerson = persons.find((person) => person.name === body.name);
-  if (exitsPerson) {
-    return res.status(400).json({
-      error: "name must be unique",
-    });
-  }
-
-  const person = {
-    id: Math.floor(Math.random() * 100000),
+  Person.findOne({
     name: body.name,
-    number: body.number,
-  };
-  persons = persons.concat(person);
-  res.json(person);
-});
+    telephone: body.telephone
+  }).then(exist => {
+    console.log(exist)
+    if (exist) {
+      return res.status(400).json({
+        error: 'name must be unique'
+      })
+    }
+    console.log(body)
 
-app.listen(3000, () => {
-  console.log("Server running on port 3000");
-});
+    const person = new Person({
+      name: req.body.name,
+      telephone: req.body.telephone
+    })
+    console.log(person)
+    person.save()
+      .then(savedPerson => {
+        res.json(savedPerson)
+        // mongoose.connection.close()
+      }).catch(error => {
+        console.log(error)
+        res.status(500).json({ error: error.message })
+      })
+  })
+})
+
+// Middlewares Errors
+app.use(notFound)
+app.use(handleErrors)
+
+const PORT = process.env.PORT
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`)
+})
