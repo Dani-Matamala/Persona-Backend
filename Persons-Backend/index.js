@@ -16,7 +16,6 @@ app.use(express.json())
 
 // Routes
 app.get('/api/persons', (req, res) => {
-  console.log('entro')
   Person.find({})
     .then(persons => {
       res.json(persons)
@@ -48,32 +47,30 @@ app.post('/api/persons', (req, res) => {
     })
   }
 
-  Person.findOne({
-    name: body.name,
-    telephone: body.telephone
-  }).then(exist => {
-    console.log(exist)
-    if (exist) {
-      return res.status(400).json({
-        error: 'name must be unique'
-      })
-    }
-    console.log(body)
+  // Person.findOne({
+  //   name: body.name,
+  //   telephone: body.telephone
+  // }).then(exist => {
+  //   console.log(exist)
+  //   if (exist) {
+  //     console.log(exist, 'existe?')
+  //     return res.status(400).json({
+  //       error: 'name must be unique'
+  //     })
+  //   }
 
-    const person = new Person({
-      name: req.body.name,
-      telephone: req.body.telephone
-    })
-    console.log(person)
-    person.save()
-      .then(savedPerson => {
-        res.json(savedPerson)
-        // mongoose.connection.close()
-      }).catch(error => {
-        console.log(error)
-        res.status(500).json({ error: error.message })
-      })
+  const person = new Person({
+    name: req.body.name,
+    telephone: req.body.telephone
   })
+  person.save()
+    .then(savedPerson => {
+      res.json(savedPerson)
+      // mongoose.connection.close()
+    }).catch(error => {
+      console.log(error)
+      res.status(500).json({ error: error.message })
+    })
 })
 
 // Middlewares Errors
