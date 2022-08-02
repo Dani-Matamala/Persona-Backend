@@ -27,6 +27,9 @@ app.get('/api/persons/:id', (req, res) => {
   Person.findById(id)
     .then(person => {
       person ? res.json(person) : res.status(404).end()
+    }).catch(error => {
+      console.log(error)
+      res.status(500).end()
     })
 })
 
@@ -35,47 +38,49 @@ app.delete('/api/persons/:id', (req, res, next) => {
   Person.findByIdAndDelete(id).then(result => {
     res.status(204).end()
   }).catch(error => next(error))
-
   res.status(204).end()
 })
 
-app.post('/api/persons', (req, res) => {
+app.post('/api/persons', (req, res, next) => {
   const body = req.body
   if (!body.name || !body.telephone) {
     return res.status(400).json({
       error: 'name or number missing'
     })
   }
-
-  // Person.findOne({
-  //   name: body.name,
-  //   telephone: body.telephone
-  // }).then(exist => {
-  //   console.log(exist)
-  //   if (exist) {
-  //     console.log(exist, 'existe?')
-  //     return res.status(400).json({
-  //       error: 'name must be unique'
-  //     })
-  //   }
-
-  const person = new Person({
-    name: req.body.name,
-    telephone: req.body.telephone
+  const newPerson = new Person({
+    name: body.name,
+    telephone: body.telephone
   })
-  person.save()
-    .then(savedPerson => {
-      res.json(savedPerson)
-      // mongoose.connection.close()
-    }).catch(error => {
-      console.log(error)
-      res.status(500).json({ error: error.message })
+
+  newPerson.save()
+    .then(savedNote => {
+      res.json(savedNote)
+    }
+    ).catch(error => next(error))
+})
+
+app.put('/api/persons/:id', (req, res, next) => {
+  const { id } = req.params
+  const person = req.body
+
+  console.log(person)
+
+  const newPersonInfo = {
+    name: person.name,
+    telephone: person.telephone
+  }
+
+  Person.findByIdAndUpdate(id, newPersonInfo, { new: true })
+    .then((result) => {
+      return res.json(result)
     })
+    .catch(error => next(error))
 })
 
 // Middlewares Errors
-app.use(notFound)
 app.use(handleErrors)
+app.use(notFound)
 
 const PORT = process.env.PORT
 
